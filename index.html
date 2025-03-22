@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RGB Music Sync</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.1s ease;
+        }
+        button {
+            padding: 15px;
+            font-size: 20px;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="startMusic()">Play Music</button>
+    <audio id="audio" src="song.mp3"></audio>
+    <script>
+        let audioContext, analyzer, source;
+        
+        function startMusic() {
+            const audio = document.getElementById("audio");
+            audio.play();
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            source = audioContext.createMediaElementSource(audio);
+            analyzer = audioContext.createAnalyser();
+            analyzer.fftSize = 256;
+            
+            source.connect(analyzer);
+            analyzer.connect(audioContext.destination);
+            detectBeats();
+        }
+        
+        function detectBeats() {
+            const bufferLength = analyzer.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function update() {
+                requestAnimationFrame(update);
+                analyzer.getByteFrequencyData(dataArray);
+                let sum = dataArray.reduce((a, b) => a + b, 0);
+                let avg = sum / bufferLength;
+                
+                if (avg > 50) { // Adjust sensitivity as needed
+                    document.body.style.backgroundColor = `rgb(${random(255)}, ${random(255)}, ${random(255)})`;
+                }
+            }
+            
+            update();
+        }
+        
+        function random(max) {
+            return Math.floor(Math.random() * max);
+        }
+    </script>
+</body>
+</html>
